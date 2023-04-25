@@ -49,16 +49,20 @@ def get_method(id):
             
        
 
-@app.route("/post/<int:id>", methods=['DELETE'])
-def delete_method(id):
+@app.route("/post/<int:id>/delete/<key>", methods=['DELETE'])
+def delete_method(id,key):
     if(id <= 0):
         return {'err': 'bad request'},400
     else:
-        for i in posts:
-            if(i['id'] == id):
-                posts.remove(i)
-                return {'msg': 'ok'}, 200
-        return {'err': 'not found'},404
+        post = find_posts(id)
+        if post == None:
+            return {'err': 'not found'},404
+        elif(post['key'] != key):
+            return {'err': 'forbidden'},403
+        else:
+            posts.remove(post)
+            return post
+    
 
 def find_posts(id):
     my_item = next((item for item in posts if item['id'] == id), None)
