@@ -26,7 +26,9 @@ def post_method():
     
     else:  
         msg = data['msg']
-        id = len(posts)+1
+        id = len(posts)+1 
+        # To be implement : can also declare a id as a global variable and then keep on adding one when we create the post this can be used to avoid the repeating ids.
+
         key = secrets.token_hex(15)
         timestamp = datetime.now().utcnow().isoformat()
 
@@ -49,8 +51,10 @@ def get_method(id):
             
        
 
-@app.route("/post/<int:id>/delete/<key>", methods=['DELETE'])
+@app.route("/post/<int:id>/delete/<string:key>", methods=['DELETE'])
 def delete_method(id,key):
+    #ater deleting the post it is also a new post so it will return a new key for put it updates the whole post.
+    #remaining : timestamp
     if(id <= 0):
         return {'err': 'bad request'},400
     else:
@@ -60,8 +64,9 @@ def delete_method(id,key):
         elif(post['key'] != key):
             return {'err': 'forbidden'},403
         else:
+            updated_post = {'id' : id,'msg' : post['msg'],'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
             posts.remove(post)
-            return post
+            return updated_post,200
     
 
 def find_posts(id):
