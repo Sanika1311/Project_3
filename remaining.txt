@@ -1,0 +1,9 @@
+Extension 2 :
+User profiles (needs user)
+When returning information about a post associated with a user, you must include the user’s unique metadata.
+Must be done when the route user/id/post/id is done
+
+#posts lists in users list can work or create a new posts list
+
+Extension 1 should have which keys post key or user key.
+
