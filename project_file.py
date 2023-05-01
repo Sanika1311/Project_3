@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import secrets
 from datetime import datetime
 import threading
@@ -21,7 +21,7 @@ def hello_world():
 def post_method(user_id):
     try :
         with threadLock:
-            print(request.get_json())
+            # print(request.get_json())
             data = request.get_json()
             if(data == None):
                 return {'err': 'bad request'},400
@@ -37,7 +37,9 @@ def post_method(user_id):
             
             else:  
                 msg = data['msg']
+                global postId
                 id = postId + 1
+                postId = postId +1
                 key = secrets.token_hex(15)
                 timestamp = datetime.now().utcnow().isoformat()
                 user = find_users(user_id)
@@ -46,26 +48,73 @@ def post_method(user_id):
 
                 posts_data = {'id': id, 'user key': user['key'],'key' : key, 'msg' : msg, 'timestamp': timestamp, 'user ID' : user_id}
                 posts.append(posts_data)
-                print(posts)
-                return posts_data, 200
+                # print(posts)
+                return jsonify(posts_data), 200
     except Exception as e:
         return {'err': 'bad request'},400
 
-@app.route("/users/<int:id>/post/<int:id>", methods=['GET'])
-def get_method(userid,postid):
+
+
+# @app.route("/post", methods=['POST'])
+# def post_method():
+#     try :
+#         with threadLock:
+#             data = request.get_json()
+#             if(data == None):
+#                 return {'err': 'bad request'},400
+            
+#             elif ('msg' not in data or  not isinstance(data['msg'],str)):
+#                 return {'err': 'bad request'},400
+            
+#             elif(not isinstance(data['msg'],str)):
+#                 return {'err': 'bad request'},400
+            
+#             # elif (user_id <= 0):
+#             #     return {'err': 'bad request'},400
+            
+#             else:  
+#                 msg = data['msg']
+#                 global postId
+#                 id = postId + 1
+#                 postId = postId +1
+#                 key = secrets.token_hex(15)
+#                 timestamp = datetime.now().utcnow().isoformat()
+#                 # user = find_users(user_id)
+#                 # if user == None:
+#                 #     return {'err': 'not found - User not found of the given ID'},404
+
+#                 posts_data = {'id': id, 'key' : key, 'msg' : msg, 'timestamp': timestamp}
+#                 posts.append(posts_data)
+#                 # print(posts)
+#                 return jsonify(posts_data), 200
+#     except Exception as e:
+#         return {'err': 'bad request'},400
+
+@app.route("/users/<int:user_id>/post/<int:post_id>", methods=['GET'])
+def get_method(user_id,post_id):
+    # print(postid)
     try :
         with threadLock:
-            if(postid <= 0 or userid<=0):
+            if(post_id <= 0 and user_id):
                 return {'err': 'bad request'},400
+            
+            elif not isinstance(post_id, int):
+                return {'err': 'bad request'},400
+
             else:
-                post = find_posts(postid)
+                post = find_posts(post_id)
                 if post == None:
                     return {'err': 'not found'},404 
-                elif post['user ID'] != userid:
+                
+               #post key needs to validated
+                elif post['user ID'] != user_id:
                     return {'err': 'bad request'},400
+                
                 else:
                     if(isinstance(post['id'], int) and isinstance(post['msg'],str)): #check for the date is remaining
+                        # return {'id': post['id'],'msg': post['msg'], 'timestamp' : post['timestamp']}, 200
                         return {'id': post['id'],'msg': post['msg'], 'timestamp' : post['timestamp'], 'user ID' : post['user ID']}, 200
+                    
     except Exception as e:
         return {'err': 'bad request'},400
 
@@ -80,17 +129,20 @@ def delete_method(id,key):
                 return {'err': 'bad request'},400
             else:
                 post = find_posts(id)
+                # print(post)
                 if post == None:
                     return {'err': 'not found'},404
                 elif(post['key'] != key):
                     return {'err': 'forbidden'},403
                 else:
+                    # updated_post = {'id' : id,'msg' : post['msg'],  'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
                     updated_post = {'id' : id,'msg' : post['msg'], 'user ID' : post['user ID'], 'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
                     posts.remove(post)
                     return updated_post,200
     except Exception as e:
         return {'err': 'bad request'},400
-    
+
+# #extension 2 : 
 @app.route("/users", methods=["POST"])
 def signup():
     #make username and id unique add the code for that - username is unique done
@@ -223,6 +275,7 @@ def edit_user(key):
         return {'err': 'bad request'},400
     
 #let user search for posts based by a given user.
+#extension 3
 @app.route("/users/post/search/<int:id>",methods = ["GET"])
 def search_posts(id):
     try :
