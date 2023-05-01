@@ -17,8 +17,8 @@ def hello_world():
     print("hello")
     return "<h1>Hello, World!</h1>"
 
-@app.route("/post", methods=['POST'])
-def post_method():
+@app.route("/users/<int:id>/post", methods=['POST'])
+def post_method(user_id):
     try :
         with threadLock:
             print(request.get_json())
@@ -32,42 +32,47 @@ def post_method():
             elif(not isinstance(data['msg'],str)):
                 return {'err': 'bad request'},400
             
+            elif (user_id <= 0):
+                return {'err': 'bad request'},400
+            
             else:  
                 msg = data['msg']
                 id = postId + 1
-                # id = len(posts)+1 
-                # To be implement : can also declare a id as a global variable and then keep on adding one when we create the post this can be used to avoid the repeating ids.
-
                 key = secrets.token_hex(15)
                 timestamp = datetime.now().utcnow().isoformat()
+                user = find_users(user_id)
+                if user == None:
+                    return {'err': 'not found - User not found of the given ID'},404
 
-                posts_data = {'id': id, 'key': key, 'msg' : msg, 'timestamp': timestamp}
+                posts_data = {'id': id, 'user key': user['key'],'key' : key, 'msg' : msg, 'timestamp': timestamp, 'user ID' : user_id}
                 posts.append(posts_data)
                 print(posts)
                 return posts_data, 200
     except Exception as e:
         return {'err': 'bad request'},400
 
-@app.route("/post/<int:id>", methods=['GET'])
-def get_method(id):
+@app.route("/users/<int:id>/post/<int:id>", methods=['GET'])
+def get_method(userid,postid):
     try :
         with threadLock:
-            if(id <= 0):
+            if(postid <= 0 or userid<=0):
                 return {'err': 'bad request'},400
             else:
-                post = find_posts(id)
+                post = find_posts(postid)
                 if post == None:
                     return {'err': 'not found'},404 
+                elif post['user ID'] != userid:
+                    return {'err': 'bad request'},400
                 else:
                     if(isinstance(post['id'], int) and isinstance(post['msg'],str)): #check for the date is remaining
-                        return {'id': post['id'],'msg': post['msg'], 'timestamp' : post['timestamp']}, 200
+                        return {'id': post['id'],'msg': post['msg'], 'timestamp' : post['timestamp'], 'user ID' : post['user ID']}, 200
     except Exception as e:
         return {'err': 'bad request'},400
 
            
 @app.route("/post/<int:id>/delete/<string:key>", methods=['DELETE'])
 def delete_method(id,key):
-    #ater deleting the post it is also a new post so it will return a new key for put it updates the whole post.
+    #ater deleting the post it is also a new post so it will return a new key for put it updates the whole post.check for the keys
     #remaining : timestamp
     try :
         with threadLock:
@@ -80,7 +85,7 @@ def delete_method(id,key):
                 elif(post['key'] != key):
                     return {'err': 'forbidden'},403
                 else:
-                    updated_post = {'id' : id,'msg' : post['msg'],'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
+                    updated_post = {'id' : id,'msg' : post['msg'], 'user ID' : post['user ID'], 'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
                     posts.remove(post)
                     return updated_post,200
     except Exception as e:
@@ -216,6 +221,24 @@ def edit_user(key):
                 return {'err': 'bad request'},400
     except Exception as e:
         return {'err': 'bad request'},400
+    
+#let user search for posts based by a given user.
+@app.route("/users/post/search/<int:id>",methods = ["GET"])
+def search_posts(id):
+    try :
+        with threadLock:
+            if(id <= 0):
+                return {'err': 'bad request'},400
+            else:
+                user_post = [post for post in posts if post.get('user ID') == id]
+                if user_post == None:
+                    return {'err': 'not found'},404 
+                else:
+                    return user_post,200
+                  
+    except Exception as e:
+        return {'err': 'bad request'},400
+    
 
 def find_posts(id):
     my_item = next((item for item in posts if item['id'] == id), None)
