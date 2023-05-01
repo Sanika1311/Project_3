@@ -17,7 +17,7 @@ def hello_world():
     print("hello")
     return "<h1>Hello, World!</h1>"
 
-@app.route("/users/<int:id>/post", methods=['POST'])
+@app.route("/users/<int:user_id>/post", methods=['POST'])
 def post_method(user_id):
     try :
         with threadLock:
@@ -48,7 +48,7 @@ def post_method(user_id):
 
                 posts_data = {'id': id, 'user key': user['key'],'key' : key, 'msg' : msg, 'timestamp': timestamp, 'user ID' : user_id}
                 posts.append(posts_data)
-                # print(posts)
+                print(posts)
                 return jsonify(posts_data), 200
     except Exception as e:
         return {'err': 'bad request'},400
@@ -228,6 +228,8 @@ def edit_user(key):
             elif 'username' in data and 'email address' in data:
                 username = data['username']
                 email = data['email address']
+                if(find_user_username(username)):
+                    return {'err': 'bad request - Username should be unique'},400
                 user = find_users_keys(key)
                 if user == None:
                     return {'err': 'not found'},404
@@ -244,6 +246,10 @@ def edit_user(key):
                     return {'err': 'bad request'},400
                 else :
                     username = data['username']
+
+                    if(find_user_username(username)):
+                        return {'err': 'bad request - Username should be unique'},400
+                    
                     user = find_users_keys(key)
                     if user == None:
                         return {'err': 'not found'},404
@@ -276,7 +282,7 @@ def edit_user(key):
     
 #let user search for posts based by a given user.
 #extension 3
-@app.route("/users/post/search/<int:id>",methods = ["GET"])
+@app.route("/users/search/<int:id>",methods = ["GET"])
 def search_posts(id):
     try :
         with threadLock:
@@ -284,6 +290,7 @@ def search_posts(id):
                 return {'err': 'bad request'},400
             else:
                 user_post = [post for post in posts if post.get('user ID') == id]
+                print(user_post)
                 if user_post == None:
                     return {'err': 'not found'},404 
                 else:
@@ -291,7 +298,39 @@ def search_posts(id):
                   
     except Exception as e:
         return {'err': 'bad request'},400
+
+@app.route('/posts/search', methods=['GET'])
+def search_posts_time():
+    start_time_str = request.args.get('start_time')
+    end_time_str = request.args.get('end_time')
     
+    if not start_time_str and not end_time_str:
+        return jsonify(error='bad request - At least one of start_time or end_time must be provided.'), 400
+    
+    try:
+        if start_time_str:
+            start_time = datetime.fromisoformat(start_time_str).replace(tzinfo=datetime.timezone.utc)
+        else:
+            start_time = datetime.min.replace(tzinfo=datetime.timezone.utc)
+            
+        if end_time_str:
+            end_time = datetime.fromisoformat(end_time_str).replace(tzinfo=datetime.timezone.utc)
+        else:
+            end_time = datetime.max.replace(tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return jsonify(error='Invalid start_time or end_time format. Must be ISO 8601 timestamp in UTC.'), 400
+    
+    matched_posts = []
+    
+    for post in posts:
+        post_time = datetime.fromisoformat(post['timestamp']).replace(tzinfo=datetime.timezone.utc)
+        
+        if start_time <= post_time <= end_time:
+            matched_posts.append(post)
+    
+    return jsonify(posts=matched_posts)
+
+
 
 def find_posts(id):
     my_item = next((item for item in posts if item['id'] == id), None)
@@ -303,6 +342,10 @@ def find_users(id):
 
 def find_users_keys(key):
     my_item = next((item for item in users if item['key'] == key), None)
+    return my_item
+
+def find_user_username(username):
+    my_item = next((item for item in users if item['username'] == username), None)
     return my_item
 
 
