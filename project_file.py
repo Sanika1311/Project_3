@@ -158,19 +158,28 @@ def signup():
             elif ('email address' not in data or  not isinstance(data['email address'],str)):
                 return {'err': 'bad request'},400
             
+            
+
             else:
                 username = data['username']
                 email = data['email address']
+
+                if('moderator' not in data):
+                    moderator = False
+                    moderator_key = None
+                else:
+                    moderator = True
+                    moderator_key = secrets.token_hex(15)
                 
                 found_user_dicts = [user_dict for user_dict in users if user_dict.get('username') == username]
                 if found_user_dicts:
                     return {'err': 'bad request - Username should be unique'},400
                 else: 
                     global userId
-                    userId = userId + int(1)
+                    userId = userId + 1
                     key =  secrets.token_hex(15)
                     timestamp = datetime.now().utcnow().isoformat()
-                    user_data = {'username' : username, 'id' : userId, 'email address' : email, 'key' : key, 'timestamp': timestamp, 'posts' : []}
+                    user_data = {'username' : username, 'id' : userId, 'email address' : email, 'key' : key, 'timestamp': timestamp, 'moderator' : moderator, 'moderator key' : moderator_key}
                     print(userId)
                     print(username)
                     print(key)
@@ -178,8 +187,6 @@ def signup():
                     return user_data,200
     except Exception as e:
         return {'err': e},400
-
-
 
 
 @app.route("/users/<int:id>", methods=["GET"])
@@ -298,6 +305,33 @@ def search_posts(id):
                   
     except Exception as e:
         return {'err': 'bad request'},400
+    
+#extension 4 - delete
+@app.route("/users/<string:moderator_key>/delete/<int:id>", methods=['DELETE'])
+def delete_user(moderator_key,id):
+    try :
+        with threadLock:
+            if(id <= 0):
+                return {'err': 'bad request'},400
+            else:
+                user = find_users_keys(moderator_key)
+                # print(post)
+                if user == None:
+                    return {'err': 'not found-User is not a moderator'},404
+                elif(user['key'] != moderator_key):
+                    return {'err': 'forbidden'},403
+                else:
+                    # updated_post = {'id' : id,'msg' : post['msg'],  'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
+                    post = find_posts(id)
+                    if post == None:
+                        return {'err': 'not found- Post not found'},404
+                    else:
+                        posts.remove(post)
+                        return {'msg' : 'Post deleted successfully'},200
+        
+    except Exception as e:
+        return {'err': 'bad request'},400
+
 
 @app.route('/posts/search', methods=['GET'])
 def search_posts_time():
@@ -306,26 +340,50 @@ def search_posts_time():
     
     if not start_time_str and not end_time_str:
         return jsonify(error='bad request - At least one of start_time or end_time must be provided.'), 400
+    print(start_time_str)
+    print(end_time_str)
+    if start_time_str:
+        try:
+                
+                start_date = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M:%S')
+                print(start_date)
     
-    try:
-        if start_time_str:
-            start_time = datetime.fromisoformat(start_time_str).replace(tzinfo=datetime.timezone.utc)
-        else:
-            start_time = datetime.min.replace(tzinfo=datetime.timezone.utc)
+        except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use ISO 8601 format.'}), 400
+    else:
+        start_date = None
+
+    if end_time_str:
+        try:
+            end_date = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M:%S')
             
-        if end_time_str:
-            end_time = datetime.fromisoformat(end_time_str).replace(tzinfo=datetime.timezone.utc)
-        else:
-            end_time = datetime.max.replace(tzinfo=datetime.timezone.utc)
-    except ValueError:
-        return jsonify(error='Invalid start_time or end_time format. Must be ISO 8601 timestamp in UTC.'), 400
+            print(end_date)
+        except ValueError:
+            return jsonify({'error': 'Invalid end_date format. Use ISO 8601 format.'}), 400
+    else:
+        end_date = None
+    
+    print(start_date)
+    print(end_date)
+    # try:
+    #     if start_time_str:
+    #         start_time = datetime.fromisoformat(start_time_str).replace(tzinfo=datetime.timezone.utc)
+    #     else:
+    #         start_time = datetime.min.replace(tzinfo=datetime.timezone.utc)
+            
+    #     if end_time_str:
+    #         end_time = datetime.fromisoformat(end_time_str).replace(tzinfo=datetime.timezone.utc)
+    #     else:
+    #         end_time = datetime.max.replace(tzinfo=datetime.timezone.utc)
+    # except ValueError:
+    #     return jsonify(error='Invalid start_time or end_time format. Must be ISO 8601 timestamp in UTC.'), 400
     
     matched_posts = []
     
     for post in posts:
-        post_time = datetime.fromisoformat(post['timestamp']).replace(tzinfo=datetime.timezone.utc)
-        
-        if start_time <= post_time <= end_time:
+        # post_time = datetime.fromisoformat(post['timestamp']).replace(tzinfo=datetime.timezone.utc)
+        post_date = datetime.strptime(post['timestamp'], '%Y-%m-%dT%H:%M:%S')
+        if start_date <= post_date <= end_date:
             matched_posts.append(post)
     
     return jsonify(posts=matched_posts)
