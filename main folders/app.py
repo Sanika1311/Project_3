@@ -87,7 +87,6 @@ def delete_method(user_id,id,key):
  
     try :
         with threadLock:
-            moderator = request.args.get('moderator')
             if(id <= 0 or user_id <=0):
                 return jsonify({'err': 'bad request'}),400
             else:
@@ -105,10 +104,6 @@ def delete_method(user_id,id,key):
                     if user == None:
                         return jsonify({'err': 'not found'}),404
                     else:
-                        if(moderator == 'true'):
-                            if(user['moderator'] == False):
-                                return {'err': 'forbidden'},403
-                            else:
                                 if(post['user ID'] != user_id):
                                     return jsonify({'err': 'bad request'}),400
                                 else:
@@ -274,48 +269,46 @@ def search_posts(id):
     except Exception as e:
         return jsonify({'err': 'bad request'}),400
     
-# #extension 4 - delete
-# @app.route("/users/<string:key>/delete/<int:id>", methods=['DELETE'])
-# def delete_user(key,id):
-#     try :
-#         with threadLock:
-#             moderator = request.args.get('moderator')
-#             if(id <= 0):
-#                 return jsonify({'err': 'bad request'}),400
-#             elif(moderator == 'True'):
-#                 user = find_users_keys(key)
-#                 if user == None:
-#                     return jsonify({'err': 'not found'}),404
-#                 elif(user['key'] != key):
-#                     return jsonify({'err': 'forbidden'}),403
-#                 else:
-#                     if(moderator == 'true'):
-#                         if(user['moderator'] == False):
-#                             return {'err': 'forbidden'},403
-#                         else:
-#                             users.remove(user)
-#                             return user,200
-#                     else:
-#                         users.remove(user)
-#                         return user,200
-#             else:
-#                 user = find_users_keys(key)
-#                 # print(post)
-#                 if user == None:
-#                     return {'err': 'not found-User is not a moderator'},404
-#                 elif(user['key'] != moderator_key):
-#                     return {'err': 'forbidden'},403
-#                 else:
-#                     # updated_post = {'id' : id,'msg' : post['msg'],  'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
-#                     post = find_posts(id)
-#                     if post == None:
-#                         return {'err': 'not found- Post not found'},404
-#                     else:
-#                         posts.remove(post)
-#                         return {'msg' : 'Post deleted successfully'},200
+#extension 4 - delete
+@app.route("/users/<string:key>/delete/<int:id>", methods=['DELETE'])
+def delete_user(key,id):
+    try :
+        with threadLock:
+            moderator = request.args.get('moderator')
+            if(id <= 0):
+                return jsonify({'err': 'bad request'}),400
+            elif(moderator == 'True'):
+                user = next((item for item in users if item['moderator key'] == key), None)
+                if user == None:
+                    return jsonify({'err': 'not found'}),404
+                elif(user['moderator key'] != key):
+                    return jsonify({'err': 'forbidden'}),403
+                else:
+                        if(user['moderator'] == False):
+                            return {'err': 'forbidden'},403
+                        else:
+                            users.remove(user)
+                            return user,200
+
+            else:
+                user = find_users_keys(key)
+                # print(post)
+                if user == None:
+                    return {'err': 'not found-User is not a moderator'},404
+                elif(user['key'] != key):
+                    return {'err': 'forbidden'},403
+                else:
+                    # updated_post = {'id' : id,'msg' : post['msg'],  'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
+                    post = find_posts(id)
+                    if post == None:
+                        return {'err': 'not found- Post not found'},404
+                    else:
+                        posts.remove(post)
+                        return {'msg' : 'Post deleted successfully'},200
+
         
-#     except Exception as e:
-#         return {'err': 'bad request'},400
+    except Exception as e:
+        return {'err': 'bad request'},400
 
 
 @app.route('/posts/search', methods=['GET'])
