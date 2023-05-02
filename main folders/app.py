@@ -292,13 +292,12 @@ def delete_user(key,id):
 
             else:
                 user = find_users_keys(key)
-                # print(post)
                 if user == None:
                     return {'err': 'not found-User is not a moderator'},404
                 elif(user['key'] != key):
                     return {'err': 'forbidden'},403
                 else:
-                    # updated_post = {'id' : id,'msg' : post['msg'],  'key' :secrets.token_hex(15),'timestamp' : datetime.now().utcnow().isoformat()}
+        
                     post = find_posts(id)
                     if post == None:
                         return {'err': 'not found- Post not found'},404
@@ -343,23 +342,10 @@ def search_posts_time():
     
     print(start_date)
     print(end_date)
-    # try:
-    #     if start_time_str:
-    #         start_time = datetime.fromisoformat(start_time_str).replace(tzinfo=datetime.timezone.utc)
-    #     else:
-    #         start_time = datetime.min.replace(tzinfo=datetime.timezone.utc)
-            
-    #     if end_time_str:
-    #         end_time = datetime.fromisoformat(end_time_str).replace(tzinfo=datetime.timezone.utc)
-    #     else:
-    #         end_time = datetime.max.replace(tzinfo=datetime.timezone.utc)
-    # except ValueError:
-    #     return jsonify(error='Invalid start_time or end_time format. Must be ISO 8601 timestamp in UTC.'), 400
     
     matched_posts = []
     
     for post in posts:
-        # post_time = datetime.fromisoformat(post['timestamp']).replace(tzinfo=datetime.timezone.utc)
         post_date = datetime.strptime(post['timestamp'], '%Y-%m-%dT%H:%M:%S')
         if start_date <= post_date <= end_date:
             matched_posts.append(post)
