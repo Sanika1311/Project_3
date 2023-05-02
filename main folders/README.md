@@ -17,19 +17,19 @@ Our code encountered a 404 error which was difficult to resolve and took a signi
 
 # Extensions :
 
-# 1. Users and User Keys - 
+1. Users and User Keys - 
 This extension enables users to create a post by providing both the user ID and corresponding user key. If the user created a post, they only need to provide the user's key to delete the post. It is crucial to differentiate between the keys for the post and the user to avoid confusion.
 
-# 2. User Profiles - 
+2. User Profiles - 
 This extension enables users to create a user by providing a unique part and optional non-unique parts, retrieve a user's metadata by specifying their ID or unique metadata, edit a user's metadata with their key for authentication, and include the user's unique metadata when returning data about a post associated with the user.
 
-# 3. Date and Time - based range queries - 
+3. Date and Time - based range queries - 
 This extension lets the users search for posts based on a start date and time, an end date and time, or both. When making such a request, the API endpoint returns a list of post information, including the post ID, message, timestamp, and any other relevant data such as user information.
 
-# 4. User - based range queries - 
+4. User - based range queries - 
 This extension lets the users to search for posts made by a specific user by providing the user ID as a parameter to the API endpoint. The endpoint then returns a list of post information associated with that user, including the post ID, message, timestamp, and any other relevant data such as user information. By using this extension, users can easily and quickly find posts made by a particular user without having to manually sort through all the posts on the platform.
 
-# 5. Moderator role - 
+5. Moderator role - 
 This extension lets the users to create a new privileged role of 'administrator' that has the authority to delete posts not belonging to them using a distinct key called the 'moderator key'. The 'moderator key' can be added to the user's metadata as a 'moderator' flag, provided that the code already has user authentication implemented. When deleting a post through the API, users must specify whether they are using a post key or a moderator key. Additionally, the extension includes a safeguarded mechanism for generating new moderator keys to prevent unauthorized access.
 
 
