@@ -17,7 +17,21 @@ Our code encountered a 404 error which was difficult to resolve and took a signi
 
 # Extensions :
 
-1.
+1. Users and User Keys :
+
+
+2. User Profiles
+
+
+3. Date and Time - based range queries
+
+
+4. User - based range queries
+
+
+5. Moderator
+
+
 
 
 
