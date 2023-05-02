@@ -11,10 +11,11 @@ In our testing approach, we utilized input testing by generating a set of test c
 Our code has been thoroughly tested and we've not found any bugs. The API is functioning as intended, and providing the expected results for various user inputs. Additionally, the extensions we have implemented are working correctly.
 
 
-## Bugs Resolved :
+# Bugs Resolved :
+Our code encountered a 404 error which was difficult to resolve and took a significant amount of time and effort to fix. The error was caused by an unidentified issue in the code, requiring us to extensively debug and analyze the problem.
 
 
-## Extensions :
+# Extensions :
 
 1.
 
